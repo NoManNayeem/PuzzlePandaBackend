@@ -2,6 +2,8 @@ from rest_framework import serializers
 from .models import Profile, Quiz, FAQs, Slider
 import base64
 
+
+
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile

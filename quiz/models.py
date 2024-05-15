@@ -132,3 +132,13 @@ class Slider(models.Model):
 
     def __str__(self):
         return f"Slider {self.id}"
+
+
+class Digimart(models.Model):
+    API_Key = models.CharField(max_length=255)
+    API_Secret = models.CharField(max_length=255)
+    API_Password = models.CharField(max_length=255)
+    APP_ID = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.APP_ID

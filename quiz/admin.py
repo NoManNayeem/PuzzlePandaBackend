@@ -43,3 +43,13 @@ class FAQsAdmin(admin.ModelAdmin):
 class SliderAdmin(admin.ModelAdmin):
     list_display = ('id', 'image')
     search_fields = ('id',)
+
+
+
+from .models import Digimart
+
+class DigimartAdmin(admin.ModelAdmin):
+    list_display = ('APP_ID', 'API_Key', 'API_Secret', 'API_Password')
+    search_fields = ('APP_ID', 'API_Key')
+
+admin.site.register(Digimart, DigimartAdmin)
