@@ -5,7 +5,6 @@ from django.db.models import Count
 import random
 from .models import Quiz, Profile, FAQs, Slider
 from .serializer import QuizSerializer, ProfileSerializer, FAQsSerializer, SliderSerializer
-import base64
 
 class ProfileDetail(generics.RetrieveUpdateAPIView):
     serializer_class = ProfileSerializer
@@ -29,6 +28,10 @@ class QuizListView(APIView):
             n = int(request.query_params.get('n', 10))  # Default to 10 if 'n' is not provided
         except ValueError:
             return Response({"error": "Invalid value for 'n'"}, status=400)
+
+        quiz_count = Quiz.objects.count()
+        if n > quiz_count:
+            n = quiz_count  # Adjust n if it exceeds the number of available quizzes
 
         quizzes = Quiz.objects.all()[:n]
         serializer = QuizSerializer(quizzes, many=True)
@@ -55,9 +58,9 @@ class PlayAgainView(APIView):
 class FAQsList(generics.ListAPIView):
     queryset = FAQs.objects.all()
     serializer_class = FAQsSerializer
-    permission_classes = []
+    permission_classes = [permissions.AllowAny]
 
 class SliderList(generics.ListAPIView):
     queryset = Slider.objects.all()
     serializer_class = SliderSerializer
-    permission_classes = []
+    permission_classes = [permissions.AllowAny]

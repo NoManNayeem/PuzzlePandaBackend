@@ -24,27 +24,45 @@ class Quiz(models.Model):
 
     @property
     def question(self):
-        return base64.b64decode(self._question).decode('utf-8')
+        try:
+            return base64.b64decode(self._question.encode('ascii')).decode('utf-8')
+        except (ValueError, UnicodeEncodeError, base64.binascii.Error):
+            return self._question
 
     @question.setter
     def question(self, value):
-        self._question = base64.b64encode(value.encode('utf-8')).decode('utf-8')
+        try:
+            self._question = base64.b64encode(value.encode('utf-8')).decode('ascii')
+        except UnicodeEncodeError:
+            self._question = value
 
     @property
     def options(self):
-        return base64.b64decode(self._options).decode('utf-8')
+        try:
+            return base64.b64decode(self._options.encode('ascii')).decode('utf-8')
+        except (ValueError, UnicodeEncodeError, base64.binascii.Error):
+            return self._options
 
     @options.setter
     def options(self, value):
-        self._options = base64.b64encode(value.encode('utf-8')).decode('utf-8')
+        try:
+            self._options = base64.b64encode(value.encode('utf-8')).decode('ascii')
+        except UnicodeEncodeError:
+            self._options = value
 
     @property
     def correct_answer(self):
-        return base64.b64decode(self._correct_answer).decode('utf-8')
+        try:
+            return base64.b64decode(self._correct_answer.encode('ascii')).decode('utf-8')
+        except (ValueError, UnicodeEncodeError, base64.binascii.Error):
+            return self._correct_answer
 
     @correct_answer.setter
     def correct_answer(self, value):
-        self._correct_answer = base64.b64encode(value.encode('utf-8')).decode('utf-8')
+        try:
+            self._correct_answer = base64.b64encode(value.encode('utf-8')).decode('ascii')
+        except UnicodeEncodeError:
+            self._correct_answer = value
 
     def __str__(self):
         return self.question
@@ -59,19 +77,31 @@ class FAQs(models.Model):
 
     @property
     def question(self):
-        return base64.b64decode(self._question).decode('utf-8')
+        try:
+            return base64.b64decode(self._question.encode('ascii')).decode('utf-8')
+        except (ValueError, UnicodeEncodeError, base64.binascii.Error):
+            return self._question
 
     @question.setter
     def question(self, value):
-        self._question = base64.b64encode(value.encode('utf-8')).decode('utf-8')
+        try:
+            self._question = base64.b64encode(value.encode('utf-8')).decode('ascii')
+        except UnicodeEncodeError:
+            self._question = value
 
     @property
     def answer(self):
-        return base64.b64decode(self._answer).decode('utf-8')
+        try:
+            return base64.b64decode(self._answer.encode('ascii')).decode('utf-8')
+        except (ValueError, UnicodeEncodeError, base64.binascii.Error):
+            return self._answer
 
     @answer.setter
     def answer(self, value):
-        self._answer = base64.b64encode(value.encode('utf-8')).decode('utf-8')
+        try:
+            self._answer = base64.b64encode(value.encode('utf-8')).decode('ascii')
+        except UnicodeEncodeError:
+            self._answer = value
 
     def __str__(self):
         return self.question

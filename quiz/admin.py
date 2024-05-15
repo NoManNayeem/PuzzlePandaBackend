@@ -16,7 +16,7 @@ class ProfileAdmin(admin.ModelAdmin):
 
 @admin.register(Quiz)
 class QuizAdmin(admin.ModelAdmin):
-    list_display = ('question', 'correct_answer')
+    list_display = ('question', 'options', 'correct_answer')
     search_fields = ('question', 'correct_answer')
     # Removed list_filter on correct_answer as it's not suitable for filtering
 
