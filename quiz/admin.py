@@ -2,17 +2,20 @@ from django.contrib import admin
 from .models import Profile, Quiz, FAQs, Slider
 import base64
 
+
+
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'is_subscribed', 'credits', 'is_active')
-    search_fields = ('user__username', 'user__email')
-    list_filter = ('is_subscribed', 'is_active')
-    readonly_fields = ('user', 'is_active')
+    list_display = ('user', 'is_subscribed', 'credits', 'primary_phone', 'subscription_phone', 'operator', 'full_name')
+    search_fields = ('user__username', 'user__email', 'primary_phone', 'subscription_phone', 'full_name')
+    list_filter = ('is_subscribed', 'operator')
+    readonly_fields = ('user',)
 
     def save_model(self, request, obj, form, change):
         if not obj.is_subscribed:
             obj.is_active = False
         super().save_model(request, obj, form, change)
+
 
 @admin.register(Quiz)
 class QuizAdmin(admin.ModelAdmin):

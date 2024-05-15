@@ -5,8 +5,8 @@ import base64
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ['id', 'user', 'is_subscribed', 'credits', 'is_active']
-        read_only_fields = ['user', 'is_active']
+        fields = ['id', 'user', 'is_subscribed', 'credits', ]
+        read_only_fields = ['user',]
 
 
 class QuizSerializer(serializers.ModelSerializer):

@@ -1,20 +1,40 @@
 import base64
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.validators import RegexValidator
+import re
+from django.core.exceptions import ValidationError
 
+
+def validate_phone_number(value):
+    phone_regex = re.compile(r'^880\d{10}$')
+    if not phone_regex.match(value):
+        raise ValidationError('Invalid phone number, must be of the form 880XXXXXXXXXX')
+
+# Then in your Profile model, use this validator:
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     is_subscribed = models.BooleanField(default=False)
     credits = models.IntegerField(default=0)
-    is_active = models.BooleanField(default=True)
+    primary_phone = models.CharField(validators=[validate_phone_number], max_length=13, blank=True)
+    subscription_phone = models.CharField(validators=[validate_phone_number], max_length=13, blank=True)
+    OPERATOR_CHOICES = [
+        ('GP', 'Grameenphone'),
+        ('BL', 'Banglalink'),
+        ('RA', 'Robi/Airtel'),
+        ('TT', 'Teletalk'),
+    ]
+    operator = models.CharField(max_length=2, choices=OPERATOR_CHOICES, blank=True)
+    full_name = models.CharField(max_length=255, blank=True)
 
+    
     def save(self, *args, **kwargs):
         if not self.is_subscribed:
-            self.is_active = False
+            self.user.is_active = False
         super(Profile, self).save(*args, **kwargs)
 
     def __str__(self):
-        return self.user.username
+        return self.user.username 
 
 
 class Quiz(models.Model):
