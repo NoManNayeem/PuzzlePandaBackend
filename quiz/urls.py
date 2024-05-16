@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView, TokenVerifyView
 from quiz.RegisterView import RegisterView
-from quiz.views import QuizListView, PlayAgainView, ProfileCreate, ProfileDetail, FAQsList, SliderList
+from quiz.views import QuizListView,  ProfileCreate, ProfileDetail, FAQsList, SliderList
 
 urlpatterns = [
     
@@ -12,7 +12,6 @@ urlpatterns = [
     
     
     path('quizzes/', QuizListView.as_view(), name='quiz-list'),
-    path('quizzes/play-again/', PlayAgainView.as_view(), name='quiz-play-again'),
 
 
     path('profile/', ProfileDetail.as_view(), name='profile-detail'),

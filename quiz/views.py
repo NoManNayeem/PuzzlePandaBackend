@@ -20,6 +20,8 @@ class ProfileCreate(generics.CreateAPIView):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
+
+
 class QuizListView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -30,30 +32,22 @@ class QuizListView(APIView):
             return Response({"error": "Invalid value for 'n'"}, status=400)
 
         quiz_count = Quiz.objects.count()
-        if n > quiz_count:
-            n = quiz_count  # Adjust n if it exceeds the number of available quizzes
+        if quiz_count == 0:
+            return Response({"error": "No quizzes available"}, status=404)
 
-        quizzes = Quiz.objects.all()[:n]
+        n = min(n, quiz_count)  # Adjust n if it exceeds the number of available quizzes
+
+        if quiz_count > 10:
+            random_ids = random.sample(range(1, quiz_count + 1), n)
+            quizzes = Quiz.objects.filter(id__in=random_ids)
+        else:
+            quizzes = Quiz.objects.all()
+
         serializer = QuizSerializer(quizzes, many=True)
         return Response(serializer.data)
 
-class PlayAgainView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
-        try:
-            n = int(request.query_params.get('n', 10))  # Default to 10 if 'n' is not provided
-        except ValueError:
-            return Response({"error": "Invalid value for 'n'"}, status=400)
 
-        quiz_count = Quiz.objects.count()
-        if n > quiz_count:
-            n = quiz_count  # Adjust n if it exceeds the number of available quizzes
-
-        random_ids = random.sample(range(1, quiz_count + 1), n)
-        quizzes = Quiz.objects.filter(id__in=random_ids)
-        serializer = QuizSerializer(quizzes, many=True)
-        return Response(serializer.data)
 
 class FAQsList(generics.ListAPIView):
     queryset = FAQs.objects.all()
