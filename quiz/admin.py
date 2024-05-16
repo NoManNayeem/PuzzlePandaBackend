@@ -5,6 +5,7 @@ import base64
 
 
 
+
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'is_subscribed', 'credits', 'primary_phone', 'subscription_phone', 'operator', 'full_name')
@@ -60,10 +61,61 @@ class QuizAdminForm(forms.ModelForm):
             raise forms.ValidationError("Encoding error in correct_answer field")
         return correct_answer_encoded
 
+
+
+
+
+class UploadFileForm(forms.Form):
+    file = forms.FileField()
+
+
+
+
+from django.shortcuts import render
+from django.urls import path
+from django.http import HttpResponseRedirect
+from django.contrib import admin, messages
+from .models import Quiz
+import pandas as pd
+import base64
+
 class QuizAdmin(admin.ModelAdmin):
     form = QuizAdminForm
     list_display = ('decoded_question', 'decoded_options', 'decoded_correct_answer')
     search_fields = ('decoded_question', 'decoded_correct_answer')
+    change_list_template = "admin/quiz_change_list.html"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('upload-file/', self.admin_site.admin_view(self.upload_file), name='appname_quiz_upload_file')
+        ]
+        return custom_urls + urls
+
+    def upload_file(self, request):
+        if request.method == "POST":
+            form = UploadFileForm(request.POST, request.FILES)
+            if form.is_valid():
+                file = request.FILES["file"]
+                df = pd.read_excel(file)
+                for _, row in df.iterrows():
+                    question = row['question']
+                    options = row['options']
+                    correct_answer = row['correct_answer']
+                    Quiz.objects.create(
+                        _question=base64.b64encode(question.encode('utf-8')).decode('ascii'),
+                        _options=base64.b64encode(options.encode('utf-8')).decode('ascii'),
+                        _correct_answer=base64.b64encode(correct_answer.encode('utf-8')).decode('ascii')
+                    )
+                self.message_user(request, "Quizzes created successfully", messages.SUCCESS)
+                return HttpResponseRedirect("../")
+        else:
+            form = UploadFileForm()
+        context = {
+            'form': form,
+            'title': 'Upload Quizzes from file',
+        }
+        return render(request, "admin/upload_file.html", context)
 
     def decoded_question(self, obj):
         return base64.b64decode(obj._question.encode('ascii')).decode('utf-8')
