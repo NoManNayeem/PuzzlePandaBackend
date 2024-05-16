@@ -11,7 +11,6 @@ def validate_phone_number(value):
     if not phone_regex.match(value):
         raise ValidationError('Invalid phone number, must be of the form 880XXXXXXXXXX')
 
-# Then in your Profile model, use this validator:
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     is_subscribed = models.BooleanField(default=False)
@@ -27,7 +26,6 @@ class Profile(models.Model):
     operator = models.CharField(max_length=2, choices=OPERATOR_CHOICES, blank=True)
     full_name = models.CharField(max_length=255, blank=True)
 
-    
     def save(self, *args, **kwargs):
         if not self.is_subscribed:
             self.user.is_active = False

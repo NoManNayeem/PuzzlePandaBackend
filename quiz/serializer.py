@@ -1,15 +1,31 @@
 from rest_framework import serializers
 from .models import Profile, Quiz, FAQs, Slider
 import base64
+from django.contrib.auth.models import User
 
 
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username']
+        read_only_fields = ['username']
 
 class ProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+
     class Meta:
         model = Profile
-        fields = ['id', 'user', 'is_subscribed', 'credits', ]
-        read_only_fields = ['user',]
+        fields = ['id', 'user', 'primary_phone', 'subscription_phone', 'operator', 'full_name', 'credits']
+        read_only_fields = ['user', 'is_subscribed', 'credits']
 
+    def update(self, instance, validated_data):
+        instance.primary_phone = validated_data.get('primary_phone', instance.primary_phone)
+        instance.subscription_phone = validated_data.get('subscription_phone', instance.subscription_phone)
+        instance.operator = validated_data.get('operator', instance.operator)
+        instance.full_name = validated_data.get('full_name', instance.full_name)
+        instance.save()
+        return instance
 
 class QuizSerializer(serializers.ModelSerializer):
     class Meta:
