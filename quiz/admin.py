@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import Profile, Quiz, FAQs, Slider
+from django import forms
 import base64
 
 
@@ -17,17 +18,68 @@ class ProfileAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
-@admin.register(Quiz)
-class QuizAdmin(admin.ModelAdmin):
-    list_display = ('question', 'options', 'correct_answer')
-    search_fields = ('question', 'correct_answer')
-    # Removed list_filter on correct_answer as it's not suitable for filtering
 
-    def save_model(self, request, obj, form, change):
-        obj._question = base64.b64encode(obj.question.encode('utf-8')).decode('utf-8')
-        obj._options = base64.b64encode(obj.options.encode('utf-8')).decode('utf-8')
-        obj._correct_answer = base64.b64encode(obj.correct_answer.encode('utf-8')).decode('utf-8')
-        super().save_model(request, obj, form, change)
+class QuizAdminForm(forms.ModelForm):
+    question = forms.CharField(widget=forms.Textarea)
+    options = forms.CharField(widget=forms.Textarea)
+    correct_answer = forms.CharField(widget=forms.Textarea)
+
+    class Meta:
+        model = Quiz
+        fields = ['question', 'options', 'correct_answer']
+
+    def __init__(self, *args, **kwargs):
+        super(QuizAdminForm, self).__init__(*args, **kwargs)
+        if self.instance.pk:
+            # Decode fields for display
+            self.fields['question'].initial = base64.b64decode(self.instance._question.encode('ascii')).decode('utf-8')
+            self.fields['options'].initial = base64.b64decode(self.instance._options.encode('ascii')).decode('utf-8')
+            self.fields['correct_answer'].initial = base64.b64decode(self.instance._correct_answer.encode('ascii')).decode('utf-8')
+
+    def clean_question(self):
+        question = self.cleaned_data['question']
+        try:
+            question_encoded = base64.b64encode(question.encode('utf-8')).decode('ascii')
+        except UnicodeEncodeError:
+            raise forms.ValidationError("Encoding error in question field")
+        return question_encoded
+
+    def clean_options(self):
+        options = self.cleaned_data['options']
+        try:
+            options_encoded = base64.b64encode(options.encode('utf-8')).decode('ascii')
+        except UnicodeEncodeError:
+            raise forms.ValidationError("Encoding error in options field")
+        return options_encoded
+
+    def clean_correct_answer(self):
+        correct_answer = self.cleaned_data['correct_answer']
+        try:
+            correct_answer_encoded = base64.b64encode(correct_answer.encode('utf-8')).decode('ascii')
+        except UnicodeEncodeError:
+            raise forms.ValidationError("Encoding error in correct_answer field")
+        return correct_answer_encoded
+
+class QuizAdmin(admin.ModelAdmin):
+    form = QuizAdminForm
+    list_display = ('decoded_question', 'decoded_options', 'decoded_correct_answer')
+    search_fields = ('decoded_question', 'decoded_correct_answer')
+
+    def decoded_question(self, obj):
+        return base64.b64decode(obj._question.encode('ascii')).decode('utf-8')
+    decoded_question.short_description = 'Question'
+
+    def decoded_options(self, obj):
+        return base64.b64decode(obj._options.encode('ascii')).decode('utf-8')
+    decoded_options.short_description = 'Options'
+
+    def decoded_correct_answer(self, obj):
+        return base64.b64decode(obj._correct_answer.encode('ascii')).decode('utf-8')
+    decoded_correct_answer.short_description = 'Correct Answer'
+
+admin.site.register(Quiz, QuizAdmin)
+
+
 
 @admin.register(FAQs)
 class FAQsAdmin(admin.ModelAdmin):
