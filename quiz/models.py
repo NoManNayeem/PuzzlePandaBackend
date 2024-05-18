@@ -162,3 +162,20 @@ class Performance(models.Model):
     @property
     def total_questions(self):
         return self.correct_answers + self.wrong_answers
+
+
+
+# models.py
+from django.contrib.auth.models import User
+from django.db import models
+
+class Spin(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    date = models.DateField()
+    count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        unique_together = ('user', 'date')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.date} - {self.count} spins"

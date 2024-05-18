@@ -3,12 +3,14 @@ from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView,
 from quiz.RegisterView import RegisterView
 from quiz.views import QuizListView,  ProfileCreate, ProfileDetail, FAQsList, SliderList
 from .resultView import ValidateResultView, UserPerformanceView
+from .spinViews import SpinDetailView
 
 
 
 
 
 urlpatterns = [
+    path('spin/', SpinDetailView.as_view(), name='spin-detail'),
 
     path('user-performance/', UserPerformanceView.as_view(), name='user_performance'),
     path('validate-result/', ValidateResultView.as_view(), name='validate-result'),

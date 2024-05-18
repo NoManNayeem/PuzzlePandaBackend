@@ -172,3 +172,15 @@ class PerformanceAdmin(admin.ModelAdmin):
     ordering = ('-date_played',)
 
 admin.site.register(Performance, PerformanceAdmin)
+
+
+
+# admin.py
+from .models import Spin
+
+class SpinAdmin(admin.ModelAdmin):
+    list_display = ('user', 'date', 'count')
+    list_filter = ('date', 'user')
+    search_fields = ('user__username',)
+
+admin.site.register(Spin, SpinAdmin)

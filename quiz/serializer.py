@@ -128,3 +128,10 @@ class PerformanceSerializer(serializers.ModelSerializer):
         representation['user'] = instance.user.username
         return representation
 
+# serializers.py
+from .models import Spin
+
+class SpinSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Spin
+        fields = ['user', 'date', 'count']
