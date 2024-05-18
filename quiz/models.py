@@ -140,3 +140,25 @@ class Digimart(models.Model):
 
     def __str__(self):
         return self.APP_ID
+    
+
+
+
+
+from django.db import models
+from django.contrib.auth.models import User
+from datetime import date
+
+class Performance(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='performances')
+    total_quizzes_played = models.IntegerField(default=0)
+    correct_answers = models.IntegerField(default=0)
+    wrong_answers = models.IntegerField(default=0)
+    date_played = models.DateField(default=date.today)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.date_played}"
+
+    @property
+    def total_questions(self):
+        return self.correct_answers + self.wrong_answers

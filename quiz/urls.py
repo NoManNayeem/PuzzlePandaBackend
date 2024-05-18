@@ -2,8 +2,17 @@ from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView, TokenVerifyView
 from quiz.RegisterView import RegisterView
 from quiz.views import QuizListView,  ProfileCreate, ProfileDetail, FAQsList, SliderList
+from .resultView import ValidateResultView, UserPerformanceView
+
+
+
+
 
 urlpatterns = [
+
+    path('user-performance/', UserPerformanceView.as_view(), name='user_performance'),
+    path('validate-result/', ValidateResultView.as_view(), name='validate-result'),
+
     
     path('sliders/', SliderList.as_view(), name='slider-list'),
     path('faqs/', FAQsList.as_view(), name='faqs-list'),

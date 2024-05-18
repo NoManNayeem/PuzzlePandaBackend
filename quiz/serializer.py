@@ -108,3 +108,23 @@ class SliderSerializer(serializers.ModelSerializer):
         if obj.image and request:
             return request.build_absolute_uri(obj.image.url)
         return None
+
+
+
+
+from rest_framework import serializers
+from .models import Performance
+
+class PerformanceSerializer(serializers.ModelSerializer):
+    date_played = serializers.DateField(format='%Y-%m-%d')
+
+    class Meta:
+        model = Performance
+        fields = ['user', 'total_quizzes_played', 'correct_answers', 'wrong_answers', 'date_played']
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['total_questions'] = instance.total_questions
+        representation['user'] = instance.user.username
+        return representation
+

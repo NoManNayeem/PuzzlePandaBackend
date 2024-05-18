@@ -157,3 +157,18 @@ class DigimartAdmin(admin.ModelAdmin):
     search_fields = ('APP_ID', 'API_Key')
 
 admin.site.register(Digimart, DigimartAdmin)
+
+
+
+
+
+
+from .models import Performance
+
+class PerformanceAdmin(admin.ModelAdmin):
+    list_display = ('user', 'total_quizzes_played', 'correct_answers', 'wrong_answers', 'date_played')
+    list_filter = ('user', 'date_played')
+    search_fields = ('user__username',)
+    ordering = ('-date_played',)
+
+admin.site.register(Performance, PerformanceAdmin)
