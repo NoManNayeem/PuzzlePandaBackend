@@ -32,7 +32,7 @@ class SpinDetailView(APIView):
         
         gift = request.data.get('gift', None)
         coins = request.data.get('coins', 0)
-        print(f"Gift: {gift}, Coins: {coins}")
+        # print(f"Gift: {gift}, Coins: {coins}")
         
         if spin.count < 5:
             spin.count += 1

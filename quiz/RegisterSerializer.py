@@ -1,18 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import Profile  # Ensure you import Profile correctly based on your project structure
-from django.db import IntegrityError
-
-
-
-
-
-
-
-
-
-from django.contrib.auth.models import User
-from rest_framework import serializers
 
 class RegisterSerializer(serializers.ModelSerializer):
     primary_phone = serializers.CharField(source='profile.primary_phone')
@@ -36,11 +24,16 @@ class RegisterSerializer(serializers.ModelSerializer):
             username=username,
             password=validated_data['password']
         )
+        
+        # Add default credits during profile creation
+        profile_data['credits'] = 0
+        
         profile, created = Profile.objects.get_or_create(user=user, defaults=profile_data)
         if not created:
             # Update existing profile if it was automatically created by the signal
             for attr, value in profile_data.items():
                 setattr(profile, attr, value)
+            profile.credits += 50  # Add credits if the profile already exists
             profile.save()
 
         return user
