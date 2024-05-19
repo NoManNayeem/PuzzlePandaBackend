@@ -14,6 +14,19 @@ import json
 import requests
 
 
+import string
+import random
+
+def generate_request_id(user_id):
+    user_id_str = str(user_id)
+    if len(user_id_str) > 15:
+        raise ValueError("User ID is too long to generate a 15 digit request ID.")
+    
+    remaining_length = 15 - len(user_id_str)
+    alphanumeric_characters = string.ascii_letters + string.digits
+    random_chars = ''.join(random.choices(alphanumeric_characters, k=remaining_length))
+    
+    return user_id_str + random_chars
 
 
 
@@ -94,7 +107,7 @@ class GenerateApiEndpointView(APIView):
 
 
 class NotifyMeView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     @swagger_auto_schema(
         operation_description="Receive notification and update subscription status",
@@ -119,17 +132,25 @@ class NotifyMeView(APIView):
         }
     )
     def get(self, request):
-        user = request.user
-        print("request.body==>",request.body)
-        
-        timeStamp = request.query_params.get('timeStamp')
         subscriberId = request.query_params.get('subscriberId')
-        applicationId = request.query_params.get('applicationId')
-        version = request.query_params.get('version')
-        frequency = request.query_params.get('frequency')
-        status = request.query_params.get('status')
-        subscriberRequestId = request.query_params.get('subscriberRequestId')
+        requestId = request.query_params.get('requestId')
+        subscriptionStatus = request.query_params.get('subscriptionStatus')
 
+        if not subscriberId:
+            return Response({"message": "subscriberId is required"}, status=status.HTTP_400_BAD_REQUEST)
+        if not requestId:
+            return Response({"message": "requestId is required"}, status=status.HTTP_400_BAD_REQUEST)
+        if not subscriptionStatus:
+            return Response({"message": "subscriptionStatus is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+        # Find User
+        user = DigimartChargingSubscriberModel.objects.filter(plain_msisdn = requestId[4:]).first().user
+        
+        print('-----------------------')
+        print(user)
+        print('-----------------------')
         if not user:
             return Response({"message": "User not found."}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -138,17 +159,13 @@ class NotifyMeView(APIView):
 
             if subscriberId:
                 digimart_subscriber.masked_msisdn = subscriberId
-            if status and status == "REGISTERED":
+            if subscriptionStatus and subscriptionStatus == "S1000":
                 digimart_subscriber.subscription_status = "Registered"
                 
             request_data_dict = {
-                "timeStamp": timeStamp,
                 "subscriberId": subscriberId,
-                "applicationId": applicationId,
-                "version": version,
-                "frequency": frequency,
-                "status": status,
-                "subscriberRequestId": subscriberRequestId
+                "subscriptionStatus": subscriptionStatus,
+                "requestId": requestId
             }
 
             digimart_subscriber.subscription_notification = json.dumps(request_data_dict)
@@ -156,7 +173,7 @@ class NotifyMeView(APIView):
             return Response({"message": "Subscription notification updated successfully."}, status=status.HTTP_200_OK)
         except DigimartChargingSubscriberModel.DoesNotExist:
             return Response({"error": "DigimartChargingSubscriberModel not found for the user."}, status=status.HTTP_404_NOT_FOUND)
-        
+
         
         
         
@@ -242,10 +259,6 @@ class UnsubscriptionView(APIView):
     )
     def post(self, request):
         user = request.user
-        action = 0
-
-        if not action:
-            return Response({"error": "Action is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             subscriberId = DigimartChargingSubscriberModel.objects.filter(user=user).first().masked_msisdn
@@ -256,8 +269,8 @@ class UnsubscriptionView(APIView):
             payload = {
                 "applicationId": applicationId,
                 "password": appPassword,
-                "subscriberId": subscriberId,
-                "action": action
+                "subscriberId": f"tel:{subscriberId}",
+                "action": '0'
             }
 
             response = requests.post('https://api.digimart.store/subs/unregistration', json=payload)
