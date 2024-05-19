@@ -149,20 +149,6 @@ class SliderAdmin(admin.ModelAdmin):
     search_fields = ('id',)
 
 
-
-from .models import Digimart
-
-class DigimartAdmin(admin.ModelAdmin):
-    list_display = ('APP_ID', 'API_Key', 'API_Secret', 'API_Password')
-    search_fields = ('APP_ID', 'API_Key')
-
-admin.site.register(Digimart, DigimartAdmin)
-
-
-
-
-
-
 from .models import Performance
 
 class PerformanceAdmin(admin.ModelAdmin):
@@ -184,3 +170,22 @@ class SpinAdmin(admin.ModelAdmin):
     search_fields = ('user__username',)
 
 admin.site.register(Spin, SpinAdmin)
+
+
+
+
+
+# admin.py
+
+from django.contrib import admin
+from quiz.DigimartSubscriptionModel import DigimartSubscription, DigimartChargingSubscriberModel
+
+@admin.register(DigimartSubscription)
+class DigimartSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ('APP_ID', 'API_Key', 'API_Secret', 'API_Password', 'redirect_URL')
+    search_fields = ('APP_ID', 'API_Key')
+
+@admin.register(DigimartChargingSubscriberModel)
+class DigimartChargingSubscriberModelAdmin(admin.ModelAdmin):
+    list_display = ('plain_msisdn', 'masked_msisdn', 'subscription_status', 'subscription_notification', 'subscription_confirm_notification')
+    search_fields = ('plain_msisdn', 'masked_msisdn')

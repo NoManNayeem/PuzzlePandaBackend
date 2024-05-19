@@ -4,12 +4,22 @@ from quiz.RegisterView import RegisterView
 from quiz.views import QuizListView,  ProfileCreate, ProfileDetail, FAQsList, SliderList
 from .resultView import ValidateResultView, UserPerformanceView
 from .spinViews import SpinDetailView
-
+from .DigimartSubcriptionView import GenerateApiEndpointView, NotifyMeView, ConfirmNotificationView, UnsubscriptionView, SubscriptionStatusView
 
 
 
 
 urlpatterns = [
+    path('digimart/check-subscription/', SubscriptionStatusView.as_view(), name='check_subscription'),
+    path('digimart/unsubscribe/', UnsubscriptionView.as_view(), name='unsubscribe'),
+    path('digimart/confirm-notification/', ConfirmNotificationView.as_view(), name='confirm_notification'),
+    path('digimart/notify-me/', NotifyMeView.as_view(), name='notify_me'),
+    path('digimart/generate-api-endpoint/', GenerateApiEndpointView.as_view(), name='generate_api_endpoint'),
+
+    
+    
+    
+    
     path('spin/', SpinDetailView.as_view(), name='spin-detail'),
 
     path('user-performance/', UserPerformanceView.as_view(), name='user_performance'),
