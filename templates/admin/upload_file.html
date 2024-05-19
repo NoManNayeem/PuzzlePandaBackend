@@ -5,4 +5,38 @@
     {{ form.as_p }}
     <button type="submit" class="btn btn-primary">Upload</button>
 </form>
+
+<h1 style="text-align: center;">Quiz File Structure</h1>
+<table style="width: 100%; border-collapse: collapse; text-align: left; margin-top: 20px;">
+    <thead>
+        <tr>
+            <th style="border: 1px solid black; padding: 8px;">Question</th>
+            <th style="border: 1px solid black; padding: 8px;">Options</th>
+            <th style="border: 1px solid black; padding: 8px;">Correct Answer</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td style="border: 1px solid black; padding: 8px;">What is the capital of France?</td>
+            <td style="border: 1px solid black; padding: 8px;">Paris,London,Rome,Berlin</td>
+            <td style="border: 1px solid black; padding: 8px;">Paris</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 8px;">পৃথিবীর বৃহত্তম মহাসাগর কোনটি?</td>
+            <td style="border: 1px solid black; padding: 8px;">আটলান্টিক,প্রশান্ত,ভারত,দক্ষিণ</td>
+            <td style="border: 1px solid black; padding: 8px;">প্রশান্ত</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 8px;">Which planet is known as the Red Planet?</td>
+            <td style="border: 1px solid black; padding: 8px;">Mercury,Venus,Earth,Mars</td>
+            <td style="border: 1px solid black; padding: 8px;">Mars</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 8px;">বাংলাদেশের স্বাধীনতা দিবস কবে?</td>
+            <td style="border: 1px solid black; padding: 8px;">২৬শে মার্চ,১৬ই ডিসেম্বর,২১শে ফেব্রুয়ারি,১লা জানুয়ারি</td>
+            <td style="border: 1px solid black; padding: 8px;">২৬শে মার্চ</td>
+        </tr>
+    </tbody>
+</table>
+<p style="text-align: center; margin-top: 20px;"><strong>Note:</strong> Please make sure options are comma separated and have no whitespace, so it the correct_answer</p>
 {% endblock %}
