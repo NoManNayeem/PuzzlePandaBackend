@@ -179,7 +179,7 @@ REST_FRAMEWORK = {
     'DEFAULT_TIMEOUT': 500,  # Set the timeout value to 60 seconds
 }
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # Adjust as needed
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=120),  # Adjust as needed
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=7),  # Adjust as needed
     'SLIDING_TOKEN_LIFETIME': timedelta(days=1),  # Adjust as needed
     'SLIDING_TOKEN_REFRESH_LIFETIME_LAMBDA': lambda token: token.access_token.lifetime,
