@@ -5,12 +5,20 @@ from django.db.models import Count
 import random
 from .models import Quiz, Profile, FAQs, Slider
 from .serializer import QuizSerializer, ProfileSerializer, FAQsSerializer, SliderSerializer
+from .DigimartSubcriptionView import get_subscriber_charging_info
+
+
+
 
 class ProfileDetail(generics.RetrieveUpdateAPIView):
     serializer_class = ProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
+        
+        user = self.request.user
+        response_data, response_status = get_subscriber_charging_info(user)
+        print(response_data)
         return self.request.user.profile
 
 class ProfileCreate(generics.CreateAPIView):

@@ -26,10 +26,13 @@ class DigimartChargingSubscriberModel(models.Model):
     ]
 
     plain_msisdn = models.TextField()
+    request_id = models.TextField()
     masked_msisdn = models.TextField()
     subscription_status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='UnKnown')
     subscription_notification = models.TextField()
     subscription_confirm_notification = models.TextField()
+    subscription_status_notification = models.TextField()
+    unSubscription_notification = models.TextField()
 
     def __str__(self):
         return self.plain_msisdn

@@ -2,7 +2,7 @@
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, generics, permissions
+from rest_framework import status, permissions
 from django.contrib.auth.models import User
 from quiz.models import Profile
 from quiz.DigimartSubscriptionModel import DigimartSubscription, DigimartChargingSubscriberModel
@@ -12,23 +12,20 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 import json
 import requests
-
-
 import string
 import random
 
+
 def generate_request_id(user_id):
     user_id_str = str(user_id)
-    if len(user_id_str) > 15:
-        raise ValueError("User ID is too long to generate a 15 digit request ID.")
+    if len(user_id_str) >= 14:
+        raise ValueError("User ID is too long to generate a 15 character request ID.")
     
-    remaining_length = 15 - len(user_id_str)
+    remaining_length = 14 - len(user_id_str)  # 14 because 1 character is for the underscore
     alphanumeric_characters = string.ascii_letters + string.digits
     random_chars = ''.join(random.choices(alphanumeric_characters, k=remaining_length))
     
-    return user_id_str + random_chars
-
-
+    return f"{user_id_str}_{random_chars}"
 
 
 class GenerateApiEndpointView(APIView):
@@ -57,7 +54,6 @@ class GenerateApiEndpointView(APIView):
     def post(self, request):
         user = request.user
         msisdn = request.data.get('msisdn')
-        print('msisdn===',msisdn)
 
         if not msisdn:
             profile = Profile.objects.filter(user=user).first()
@@ -74,7 +70,7 @@ class GenerateApiEndpointView(APIView):
             api_key = digimart_subscription.API_Key
             api_secret = digimart_subscription.API_Secret
             redirect_url = digimart_subscription.redirect_URL
-            request_id = f"0000{msisdn}"
+            request_id = generate_request_id(user.id)
             current_time_utc = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
 
             signature_data = f'{api_key}|{current_time_utc}|{api_secret}'
@@ -87,6 +83,7 @@ class GenerateApiEndpointView(APIView):
                     user=user,
                     defaults={
                         'plain_msisdn': msisdn,
+                        'request_id': request_id,
                         'masked_msisdn': '',
                         'subscription_status': 'UnKnown',
                         'subscription_notification': '',
@@ -95,15 +92,13 @@ class GenerateApiEndpointView(APIView):
                 )
                 if not created:
                     digimart_subscriber.plain_msisdn = msisdn
+                    digimart_subscriber.request_id = request_id
                     digimart_subscriber.save()
                 
             return Response({"api_endpoint": api_endpoint}, status=status.HTTP_200_OK)
 
         except DigimartSubscription.DoesNotExist:
             return Response({"error": "Subscription configuration not found."}, status=status.HTTP_404_NOT_FOUND)
-
-
-
 
 
 class NotifyMeView(APIView):
@@ -143,20 +138,12 @@ class NotifyMeView(APIView):
         if not subscriptionStatus:
             return Response({"message": "subscriptionStatus is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-
-
-        # Find User
-        user = DigimartChargingSubscriberModel.objects.filter(plain_msisdn = requestId[4:]).first().user
-        
-        print('-----------------------')
-        print(user)
-        print('-----------------------')
-        if not user:
-            return Response({"message": "User not found."}, status=status.HTTP_400_BAD_REQUEST)
-        
         try:
-            digimart_subscriber = DigimartChargingSubscriberModel.objects.get(user=user)
+            digimart_subscriber = DigimartChargingSubscriberModel.objects.filter(request_id=requestId).first()
+            if not digimart_subscriber:
+                return Response({"message": "Subscriber not found."}, status=status.HTTP_404_NOT_FOUND)
 
+            user = digimart_subscriber.user
             if subscriberId:
                 digimart_subscriber.masked_msisdn = subscriberId
             if subscriptionStatus and subscriptionStatus == "S1000":
@@ -174,10 +161,7 @@ class NotifyMeView(APIView):
         except DigimartChargingSubscriberModel.DoesNotExist:
             return Response({"error": "DigimartChargingSubscriberModel not found for the user."}, status=status.HTTP_404_NOT_FOUND)
 
-        
-        
-        
-        
+
 class ConfirmNotificationView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -233,8 +217,7 @@ class ConfirmNotificationView(APIView):
             return Response({"message": "Subscription confirmation notification updated successfully."}, status=status.HTTP_200_OK)
         except DigimartChargingSubscriberModel.DoesNotExist:
             return Response({"error": "DigimartChargingSubscriberModel not found for the subscriberId."}, status=status.HTTP_404_NOT_FOUND)
-        
-        
+
 
 class UnsubscriptionView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -261,8 +244,13 @@ class UnsubscriptionView(APIView):
         user = request.user
 
         try:
-            subscriberId = DigimartChargingSubscriberModel.objects.filter(user=user).first().masked_msisdn
+            subscriber = DigimartChargingSubscriberModel.objects.filter(user=user).first()
+            if not subscriber:
+                return Response({"error": "Subscriber not found."}, status=status.HTTP_404_NOT_FOUND)
+            subscriberId = subscriber.masked_msisdn
             digimartApp = DigimartSubscription.objects.last()
+            if not digimartApp:
+                return Response({"error": "Subscription configuration not found."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             applicationId = digimartApp.APP_ID
             appPassword = digimartApp.API_Password
 
@@ -275,7 +263,12 @@ class UnsubscriptionView(APIView):
 
             response = requests.post('https://api.digimart.store/subs/unregistration', json=payload)
             response_data = response.json()
-            print("Response Data:", response_data)
+            subscriber.unSubscription_notification = response_data
+            user_profile = Profile.objects.get(user=user)
+            user_profile.is_subscribed = False
+            user_profile.save()
+            subscriber.subscription_status = "UNREGISTER"
+            subscriber.save()
             return Response({"message": response_data}, status=response.status_code)
         except DigimartChargingSubscriberModel.DoesNotExist:
             return Response({"error": "Subscriber not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -283,11 +276,7 @@ class UnsubscriptionView(APIView):
             return Response({"error": "Subscription configuration not found."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except requests.RequestException as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
-        
-        
 
-        
 
 class SubscriptionStatusView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -308,26 +297,51 @@ class SubscriptionStatusView(APIView):
     )
     def get(self, request):
         user = request.user
-
         try:
-            subscriberId = DigimartChargingSubscriberModel.objects.filter(user=user).first().masked_msisdn
-            digimartApp = DigimartSubscription.objects.last()
-            applicationId = digimartApp.APP_ID
-            appPassword = digimartApp.API_Password
+            response_data, response_status = get_subscriber_charging_info(user)
+            return Response(response_data, status=response_status)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 
-            payload = {
-                "applicationId": applicationId,
-                "password": appPassword,
-                "subscriberId": subscriberId
-            }
+#### Digimart Subscription Status Checking ####
 
-            response = requests.post('https://api.digimart.store/subscription/subscriberChargingInfo', json=payload)
-            response_data = response.json()
-            print("Response Data:", response_data)
-            return Response({"message": response_data}, status=response.status_code)
-        except DigimartChargingSubscriberModel.DoesNotExist:
-            return Response({"error": "Subscriber not found."}, status=status.HTTP_404_NOT_FOUND)
-        except DigimartSubscription.DoesNotExist:
-            return Response({"error": "Subscription configuration not found."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        except requests.RequestException as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+def get_subscriber_charging_info(user):
+    try:
+        subscriber = DigimartChargingSubscriberModel.objects.filter(user=user).last()
+        if not subscriber:
+            return {"error": "Subscriber not found."}, status.HTTP_404_NOT_FOUND
+
+        subscriber_id = subscriber.masked_msisdn
+        digimart_app = DigimartSubscription.objects.last()
+        if not digimart_app:
+            return {"error": "Subscription configuration not found."}, status.HTTP_500_INTERNAL_SERVER_ERROR
+
+        application_id = digimart_app.APP_ID
+        app_password = digimart_app.API_Password
+
+        payload = {
+            "applicationId": application_id,
+            "password": app_password,
+            "subscriberId": f"tel:{subscriber_id}"
+        }
+        
+        headers = {
+            'Content-Type': 'application/json',
+            'X-Forwarded-For': '103.121.105.14',
+        }
+        response = requests.post('https://api.digimart.store/subscription/subscriberChargingInfo', headers=headers, json=payload)
+        response_data = response.json()
+        if response.status_code == 200:
+            subscription_status = response_data.get('subscriberInfo', [{}])[0].get('subscriptionStatus', 'UNKNOWN')
+            user_profile = Profile.objects.get(user=user)
+            if subscription_status == 'REGISTERED':
+                user_profile.is_subscribed = True
+                user_profile.save()
+            else:
+                user_profile.is_subscribed = False
+                user_profile.save()
+
+        return {"message": response_data}, response.status_code
+    except requests.RequestException as e:
+        return {"error": str(e)}, status.HTTP_400_BAD_REQUEST
