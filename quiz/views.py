@@ -18,7 +18,7 @@ class ProfileDetail(generics.RetrieveUpdateAPIView):
         
         user = self.request.user
         response_data, response_status = get_subscriber_charging_info(user)
-        print(response_data)
+        # print(response_data)
         return self.request.user.profile
 
 class ProfileCreate(generics.CreateAPIView):
