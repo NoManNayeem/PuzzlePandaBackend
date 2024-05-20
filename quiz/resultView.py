@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Quiz, Profile, Performance
 from .serializer import PerformanceSerializer
 from datetime import date
+from django.db.models import F
 
 class UserPerformanceView(APIView):
     permission_classes = [IsAuthenticated]
@@ -13,7 +14,7 @@ class UserPerformanceView(APIView):
         user = request.user
         performances = Performance.objects.filter(user=user).order_by('date_played')
         serializer = PerformanceSerializer(performances, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class ValidateResultView(APIView):
     permission_classes = [IsAuthenticated]
@@ -31,6 +32,9 @@ class ValidateResultView(APIView):
 
         if not quiz_ids or not user_answers:
             return Response({"error": "Quiz IDs and User Answers are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if len(quiz_ids) != len(user_answers):
+            return Response({"error": "Quiz IDs and User Answers length mismatch."}, status=status.HTTP_400_BAD_REQUEST)
 
         correct_answers = 0
         wrong_answers = 0
@@ -57,10 +61,14 @@ class ValidateResultView(APIView):
         )
 
         if not created:
-            performance.total_quizzes_played += 1
-            performance.correct_answers += correct_answers
-            performance.wrong_answers += wrong_answers
-            performance.save()
+            performance.total_quizzes_played = F('total_quizzes_played') + 1
+            performance.correct_answers = F('correct_answers') + correct_answers
+            performance.wrong_answers = F('wrong_answers') + wrong_answers
+            performance.save(update_fields=['total_quizzes_played', 'correct_answers', 'wrong_answers'])
+
+        # Deducting credit points
+        profile.credit = F('credit') - 10
+        profile.save(update_fields=['credit'])
 
         serializer = PerformanceSerializer(performance)
         return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
